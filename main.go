@@ -6,5 +6,5 @@ func main() {
 	logger := logme.LogMe{}
 	logger.INFO("fuck ths wrks")
 	logger.WARNING("What is hteos")
-	logger.CRITICAL("faaak")
+	logger.CRITICAL("faaaky")
 }
