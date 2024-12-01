@@ -1,40 +1,41 @@
 package logme
 
 import (
-	"fmt"
+	outputs "github.com/rockkley/logme/logme/outputs"
 	"time"
 )
 
 const (
-	colorReset  = "\033[0m"
-	colorRed    = "\033[31m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorBlue   = "\033[34m"
-	colorPurple = "\033[35m"
-	colorCyan   = "\033[36m"
-	colorWhite  = "\033[37m"
+	defaultTimestampLayout = time.DateTime
 )
 
 type LogMe struct {
 	timestampLayout string
+	level           LogLevel
+	outputs         []outputs.LogOutput
+}
+
+func NewLogMe() *LogMe {
+	return &LogMe{
+		timestampLayout: defaultTimestampLayout,
+		level:           All,
+	}
+}
+
+// Timestamp
+
+func (lm *LogMe) SetTimestampLayout(timestampLayout string) {
+	lm.timestampLayout = timestampLayout
 }
 
 func (lm *LogMe) getTimestamp() string {
-	return time.Now().Format("2006-01-02 15:04:05")
+	return time.Now().Format(lm.timestampLayout)
 }
 
-func (lm *LogMe) INFO(str string) {
-	out := fmt.Sprintf("\033[42m%s\033[0m%s INFO: %s%s", lm.getTimestamp(), colorGreen, str, colorReset)
-	fmt.Println(out)
+func (lm *LogMe) SetLevel(level LogLevel) {
+	lm.level = level
 }
 
-func (lm *LogMe) WARNING(str string) {
-	out := fmt.Sprintf("\033[43m%s\033[0m%s WARNING: %s%s", lm.getTimestamp(), colorYellow, str, colorReset)
-	fmt.Println(out)
-}
-
-func (lm *LogMe) CRITICAL(str string) {
-	out := fmt.Sprintf("\033[41m%s\033[0m%s CRITICAL: %s%s", lm.getTimestamp(), colorRed, str, colorReset)
-	fmt.Println(out)
+func (lm *LogMe) AddOutput(output outputs.LogOutput) {
+	lm.outputs = append(lm.outputs, output)
 }

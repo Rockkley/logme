@@ -1,10 +1,17 @@
 package main
 
-import "github.com/rockkley/logme/logme"
+import (
+	"github.com/rockkley/logme/logme"
+	"github.com/rockkley/logme/logme/outputs"
+)
 
 func main() {
-	logger := logme.LogMe{}
-	logger.INFO("fuckk ths wrks")
-	logger.WARNING("What is hteos")
-	logger.CRITICAL("faaaky")
+	logger := logme.NewLogMe()
+	logger.SetLevel(logme.All)
+	logger.AddOutput(&outputs.FileOutput{FilePath: "mylog.txt"})
+	logger.AddOutput(&outputs.ConsoleOutput{})
+	logger.Info("Из-за леса, из-за гор, показал мужик топор..")
+	logger.Warning("..но не просто показал!..")
+	logger.Debug("(прищурься)")
+	logger.Critical("его к хую привязал!")
 }
