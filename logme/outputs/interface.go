@@ -1,5 +1,7 @@
 package outputs
 
+import "github.com/rockkley/logme/logme/entity"
+
 type LogOutput interface {
-	Write(message string) error
+	Write(message *entity.Message) error
 }

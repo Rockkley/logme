@@ -1,60 +1,54 @@
 package logme
 
 import (
-	"fmt"
-	"github.com/rockkley/logme/logme/visual"
-	"strings"
+	"github.com/rockkley/logme/logme/entity"
 )
 
 type LogLevel int
 
 const (
-	All LogLevel = iota
-	Info
+	Info LogLevel = iota
 	Warning
 	Debug
 	Critical
+	All
 )
 
-func (lm *LogMe) Info(str string) {
-	if lm.level != Info && lm.level != All {
-		return
-	}
-	out := fmt.Sprintf("%s%s%s%s %s: %s%s", visual.BgGreen, lm.getTimestamp(), visual.ColorReset, visual.ColorGreen, Info, strings.ToLower(str), visual.ColorReset)
-	fmt.Println(out)
-}
+//func (lm *LogMe) Info(str string) {
+//	if lm.level < Info {
+//		return
+//	}
+//	out := fmt.Sprintf("%s%s%s%s %s: %s%s", visual2.BgGreen, lm.getTimestamp(), visual2.ColorReset, visual2.ColorGreen, "INFO", strings.ToLower(str), visual2.ColorReset)
+//}
 
 func (lm *LogMe) Warning(str string) {
-	if lm.level <= Warning {
-		formattedMessage := lm.formatMessage(Warning, str)
-		for _, o := range lm.outputs {
-			err := o.Write(formattedMessage)
-			if err != nil {
-				return
-			}
+	if lm.level < Warning {
+		return
+	}
+	message := entity.NewMessage(int(Warning), str, lm.timestampLayout)
+	//formattedMessage := lm.formatMessage(message)
+	for _, o := range lm.outputs {
+		if err := o.Write(message); err != nil {
+			return // TODO не упускать ошибку
 		}
 	}
-	out := fmt.Sprintf("%s%s%s%s %s: %s%s", visual.BgYellow, lm.getTimestamp(), visual.ColorReset, visual.ColorYellow, Warning, strings.ToLower(str), visual.ColorReset)
-	fmt.Println(out)
 }
 
-func (lm *LogMe) Critical(str string) {
-	if lm.level != Critical && lm.level != All {
-		return
-	}
-	out := fmt.Sprintf("%s%s%s%s %s%s: %s%s%s", visual.BgRed, lm.getTimestamp(), visual.ColorReset, visual.ColorRed, visual.BoldText, Critical, strings.ToLower(str), visual.ColorReset, visual.ColorReset)
-	fmt.Println(out)
-}
+//func (lm *LogMe) Critical(str string) {
+//	if lm.level < Critical {
+//		return
+//	}
+//	out := fmt.Sprintf("%s%s%s%s %s%s: %s%s%s", visual2.BgRed, lm.getTimestamp(), visual2.ColorReset, visual2.ColorRed, visual2.BoldText, "CRITICAL", strings.ToLower(str), visual2.ColorReset, visual2.ColorReset)
+//}
 
-func (lm *LogMe) Debug(str string) {
-	if lm.level != Debug && lm.level != All {
-		return
-	}
-	out := fmt.Sprintf("%s%s%s%s %s%s: %s%s%s", visual.BgBlue, lm.getTimestamp(), visual.ColorReset, visual.ColorBlue, visual.ItalicText, Debug, strings.ToLower(str), visual.ColorReset, visual.ColorReset)
-	fmt.Println(out)
-}
-
-func (lm *LogMe) formatMessage(level LogLevel, message string) string {
-	timestamp := lm.getTimestamp()
-	return fmt.Sprintf("[%s] %s: %s", timestamp, level, message)
-}
+//func (lm *LogMe) Debug(str string) {
+//	if lm.level < Debug {
+//		return
+//	}
+//
+//	out := fmt.Sprintf("%s%s%s%s %s%s: %s%s%s", visual2.BgBlue, lm.getTimestamp(), visual2.ColorReset, visual2.ColorBlue, visual2.ItalicText, "DEBUG", strings.ToLower(str), visual2.ColorReset, visual2.ColorReset)
+//}
+//
+//func (lm *LogMe) formatMessage(msg *entity.Message) string {
+//	return fmt.Sprintf("[30%s] %d: %s", msg.TimeStamp, msg.Level, msg.Text)
+//}

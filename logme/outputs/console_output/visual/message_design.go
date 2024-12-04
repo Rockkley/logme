@@ -4,11 +4,14 @@ import (
 	"reflect"
 )
 
+type ColorPalette struct {
+	TextColor       string
+	BackgroundColor string
+}
+
 type MessageDesign struct {
-	Color        string
-	IsBold       bool
-	IsItalic     bool
-	IsUnderlined bool
+	ColorPalette ColorPalette
+	TextStyle    string
 }
 
 func (md *MessageDesign) GetSize() int {

@@ -28,10 +28,6 @@ func (lm *LogMe) SetTimestampLayout(timestampLayout string) {
 	lm.timestampLayout = timestampLayout
 }
 
-func (lm *LogMe) getTimestamp() string {
-	return time.Now().Format(lm.timestampLayout)
-}
-
 func (lm *LogMe) SetLevel(level LogLevel) {
 	lm.level = level
 }

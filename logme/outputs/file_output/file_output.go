@@ -1,4 +1,4 @@
-package outputs
+package file_output
 
 import (
 	"os"
