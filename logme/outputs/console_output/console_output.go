@@ -2,53 +2,98 @@ package console_output
 
 import (
 	"fmt"
-	"github.com/rockkley/logme/logme"
 	"github.com/rockkley/logme/logme/entity"
+	"github.com/rockkley/logme/logme/entity/levels"
 	"github.com/rockkley/logme/logme/outputs/console_output/visual"
 	"strings"
 )
 
-type ConsoleOutput struct {
-	FormatString string
-}
-
 const defaultFormatString = "{BackgroundColor}{Timestamp}{ColorReset}{TextColor} {TextStyle}{Level}: {Text}{ColorReset}"
 
-var levelToString = map[int]string{
-	int(logme.Warning): "WARNING",
-	// TODO Add other levels
+var levelToString = map[levels.LogLevel]string{
+	levels.Info:     "INFO",
+	levels.Warning:  "WARNING",
+	levels.Debug:    "DEBUG",
+	levels.Critical: "CRITICAL",
+}
+
+type ConsoleOutput struct {
+	FormatString string
+	LevelDesigns map[levels.LogLevel]visual.MessageDesign
+}
+
+type ConsoleMessage struct {
+	Timestamp string
+	Level     string
+	Text      string
+}
+
+func NewConsoleOutput() *ConsoleOutput {
+	levelDesigns := make(map[levels.LogLevel]visual.MessageDesign)
+	for level := range levelToString {
+		levelDesigns[level] = getDesignForLevel(level)
+	}
+	consoleOutput := ConsoleOutput{
+		FormatString: defaultFormatString,
+		LevelDesigns: levelDesigns,
+	}
+	return &consoleOutput
 }
 
 func (c *ConsoleOutput) Write(message *entity.Message) (err error) {
-	design := getDesignForLevel(message.Level)
-
-	formatData := map[string]string{
-		"BackgroundColor": design.ColorPalette.BackgroundColor,
-		"Timestamp":       message.Timestamp,
-		"ColorReset":      visual.ColorReset,
-		"TextColor":       design.ColorPalette.TextColor,
-		"TextStyle":       design.TextStyle,
-		"Level":           levelToString[message.Level],
-		"Text":            strings.ToLower(message.Text),
-	}
-
-	formatString := c.FormatString
-	if formatString == "" {
-		formatString = defaultFormatString
-	}
-
-	out := autoFormat(formatData, formatString)
-
-	_, err = fmt.Println(out)
+	consoleMessage := convertToConsoleMessage(*message)
+	_, err = fmt.Println(consoleMessage)
 	return
 }
 
-func getDesignForLevel(level int) visual.MessageDesign {
+func convertToConsoleMessage(message entity.Message) *ConsoleMessage {
+	// TODO ...
+	//consoleMessage = ConsoleMessage{
+	//	Design:    c.LevelDesigns[message.Level],
+	//	Timestamp: message.Timestamp,
+	//	Level:     levelToString[message.Level],
+	//	Text:      strings.ToLower(message.Text),
+	//}
+	//
+	//formatData := map[string]string{
+	//	"BackgroundColor": consoleMessage.Design.ColorPalette.BackgroundColor,
+	//	"Timestamp":       message.Timestamp,
+	//	"ColorReset":      visual.ColorReset,
+	//	"TextColor":       consoleMessage.Design.ColorPalette.TextColor,
+	//	"TextStyle":       consoleMessage.Design.TextStyle,
+	//	"Level":           levelToString[message.Level],
+	//	"Text":            strings.ToLower(message.Text),
+	//}
+	//
+	//formatString := c.FormatString
+	//if formatString == "" {
+	//	formatString = defaultFormatString
+	//}
+	//
+	//out := mapToFormatString(formatData, formatString)
+	return &ConsoleMessage{}
+}
+func getDesignForLevel(level levels.LogLevel) visual.MessageDesign {
 	switch level {
-	case int(logme.Warning):
+	case levels.Info:
+		return visual.MessageDesign{
+			ColorPalette: visual.ColorPalette{TextColor: visual.ColorGreen, BackgroundColor: visual.BgGreen},
+			TextStyle:    "",
+		}
+	case levels.Warning:
 		return visual.MessageDesign{
 			ColorPalette: visual.ColorPalette{TextColor: visual.ColorYellow, BackgroundColor: visual.BgYellow},
 			TextStyle:    "",
+		}
+	case levels.Debug:
+		return visual.MessageDesign{
+			ColorPalette: visual.ColorPalette{TextColor: visual.ColorBlue, BackgroundColor: visual.BgBlue},
+			TextStyle:    visual.ItalicText,
+		}
+	case levels.Critical:
+		return visual.MessageDesign{
+			ColorPalette: visual.ColorPalette{TextColor: visual.ColorRed, BackgroundColor: visual.BgRed},
+			TextStyle:    visual.BoldText,
 		}
 	default:
 		return visual.MessageDesign{
@@ -58,7 +103,7 @@ func getDesignForLevel(level int) visual.MessageDesign {
 	}
 }
 
-func autoFormat(data map[string]string, format string) string {
+func mapToFormatString(data map[string]string, format string) string {
 	var builder strings.Builder
 	lastIndex := 0
 

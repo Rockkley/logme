@@ -1,4 +1,4 @@
-package logme
+package levels
 
 import (
 	"github.com/rockkley/logme/logme/entity"
@@ -21,17 +21,12 @@ const (
 //	out := fmt.Sprintf("%s%s%s%s %s: %s%s", visual2.BgGreen, lm.getTimestamp(), visual2.ColorReset, visual2.ColorGreen, "INFO", strings.ToLower(str), visual2.ColorReset)
 //}
 
-func (lm *LogMe) Warning(str string) {
-	if lm.level < Warning {
+func (ll *LogLevel) Warning(message *entity.Message) {
+	if *ll < Warning {
 		return
 	}
-	message := entity.NewMessage(int(Warning), str, lm.timestampLayout)
 	//formattedMessage := lm.formatMessage(message)
-	for _, o := range lm.outputs {
-		if err := o.Write(message); err != nil {
-			return // TODO не упускать ошибку
-		}
-	}
+
 }
 
 //func (lm *LogMe) Critical(str string) {
