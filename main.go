@@ -9,10 +9,10 @@ import (
 func main() {
 	logger := logme.NewLogMe()
 	logger.SetLevel(levels.All)
-	//logger.AddOutput(&file_output.FileOutput{FilePath: "mylog.txt"})
-	logger.AddOutput(console_output.NewConsoleOutput())
-	//logger.Info("Из-за леса, из-за гор, показал мужик топор..")
+	// logger.AddOutput(&file_output.FileOutput{FilePath: "mylog.txt"})
+	logger.AddOutput(console_output.NewConsoleOutput()) // TODO добавление output из стандартного набора сделать проще
+	logger.Info("Из-за леса, из-за гор, показал мужик топор..")
 	logger.Warning("..но не просто показал!..")
-	//logger.Debug("(прищурься)")
-	//logger.Critical("его к хую привязал!")
+	logger.Debug("(прищурься)")
+	logger.Critical("его к хую привязал!")
 }

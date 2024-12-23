@@ -6,7 +6,10 @@ import (
 	"github.com/rockkley/logme/logme/entity/levels"
 	"github.com/rockkley/logme/logme/outputs/console_output/visual"
 	"strings"
+	"time"
 )
+
+type levelDesignsCache = map[levels.LogLevel]visual.MessageDesign
 
 const defaultFormatString = "{BackgroundColor}{Timestamp}{ColorReset}{TextColor} {TextStyle}{Level}: {Text}{ColorReset}"
 
@@ -19,20 +22,12 @@ var levelToString = map[levels.LogLevel]string{
 
 type ConsoleOutput struct {
 	FormatString string
-	LevelDesigns map[levels.LogLevel]visual.MessageDesign
-}
-
-type ConsoleMessage struct {
-	Timestamp string
-	Level     string
-	Text      string
+	LevelDesigns levelDesignsCache
 }
 
 func NewConsoleOutput() *ConsoleOutput {
-	levelDesigns := make(map[levels.LogLevel]visual.MessageDesign)
-	for level := range levelToString {
-		levelDesigns[level] = getDesignForLevel(level)
-	}
+	levelDesigns := createLevelDesignsCache()
+
 	consoleOutput := ConsoleOutput{
 		FormatString: defaultFormatString,
 		LevelDesigns: levelDesigns,
@@ -41,13 +36,39 @@ func NewConsoleOutput() *ConsoleOutput {
 }
 
 func (c *ConsoleOutput) Write(message *entity.Message) (err error) {
-	consoleMessage := convertToConsoleMessage(*message)
+	consoleMessage := c.convertToConsoleMessage(*message)
 	_, err = fmt.Println(consoleMessage)
 	return
 }
 
-func convertToConsoleMessage(message entity.Message) *ConsoleMessage {
-	// TODO ...
+func createLevelDesignsCache() levelDesignsCache {
+	cache := make(levelDesignsCache)
+	// INFO
+	cache[levels.Info] = visual.MessageDesign{
+		ColorPalette: visual.ColorPalette{TextColor: visual.ColorGreen, BackgroundColor: visual.BgGreen},
+		TextStyle:    "",
+	}
+	// WARNING
+	cache[levels.Warning] = visual.MessageDesign{
+		ColorPalette: visual.ColorPalette{TextColor: visual.ColorYellow, BackgroundColor: visual.BgYellow},
+		TextStyle:    "",
+	}
+	// DEBUG
+	cache[levels.Debug] = visual.MessageDesign{
+		ColorPalette: visual.ColorPalette{TextColor: visual.ColorBlue, BackgroundColor: visual.BgBlue},
+		TextStyle:    visual.ItalicText,
+	}
+	// CRITICAL
+	cache[levels.Critical] = visual.MessageDesign{
+		ColorPalette: visual.ColorPalette{TextColor: visual.ColorRed, BackgroundColor: visual.BgRed},
+		TextStyle:    visual.BoldText,
+	}
+	return cache
+}
+
+func (c *ConsoleOutput) convertToConsoleMessage(message entity.Message) string {
+	design := c.LevelDesigns[message.Level]
+
 	//consoleMessage = ConsoleMessage{
 	//	Design:    c.LevelDesigns[message.Level],
 	//	Timestamp: message.Timestamp,
@@ -55,53 +76,42 @@ func convertToConsoleMessage(message entity.Message) *ConsoleMessage {
 	//	Text:      strings.ToLower(message.Text),
 	//}
 	//
-	//formatData := map[string]string{
-	//	"BackgroundColor": consoleMessage.Design.ColorPalette.BackgroundColor,
-	//	"Timestamp":       message.Timestamp,
-	//	"ColorReset":      visual.ColorReset,
-	//	"TextColor":       consoleMessage.Design.ColorPalette.TextColor,
-	//	"TextStyle":       consoleMessage.Design.TextStyle,
-	//	"Level":           levelToString[message.Level],
-	//	"Text":            strings.ToLower(message.Text),
-	//}
-	//
-	//formatString := c.FormatString
-	//if formatString == "" {
-	//	formatString = defaultFormatString
-	//}
-	//
-	//out := mapToFormatString(formatData, formatString)
-	return &ConsoleMessage{}
-}
-func getDesignForLevel(level levels.LogLevel) visual.MessageDesign {
-	switch level {
-	case levels.Info:
-		return visual.MessageDesign{
-			ColorPalette: visual.ColorPalette{TextColor: visual.ColorGreen, BackgroundColor: visual.BgGreen},
-			TextStyle:    "",
-		}
-	case levels.Warning:
-		return visual.MessageDesign{
-			ColorPalette: visual.ColorPalette{TextColor: visual.ColorYellow, BackgroundColor: visual.BgYellow},
-			TextStyle:    "",
-		}
-	case levels.Debug:
-		return visual.MessageDesign{
-			ColorPalette: visual.ColorPalette{TextColor: visual.ColorBlue, BackgroundColor: visual.BgBlue},
-			TextStyle:    visual.ItalicText,
-		}
-	case levels.Critical:
-		return visual.MessageDesign{
-			ColorPalette: visual.ColorPalette{TextColor: visual.ColorRed, BackgroundColor: visual.BgRed},
-			TextStyle:    visual.BoldText,
-		}
-	default:
-		return visual.MessageDesign{
-			ColorPalette: visual.ColorPalette{TextColor: visual.ColorWhite, BackgroundColor: visual.BgBlue},
-			TextStyle:    "",
-		}
+	formatData := map[string]string{
+		"BackgroundColor": design.ColorPalette.BackgroundColor,
+		"Timestamp":       message.Timestamp.Format(time.DateTime),
+		"ColorReset":      visual.ColorReset,
+		"TextColor":       design.ColorPalette.TextColor,
+		"TextStyle":       design.TextStyle,
+		"Level":           levelToString[message.Level],
+		"Text":            strings.ToLower(message.Text),
 	}
+
+	formatString := c.FormatString
+	if formatString == "" {
+		formatString = defaultFormatString
+	}
+
+	out := mapToFormatString(formatData, formatString)
+	return out
 }
+
+//func getDesignForLevel(level levels.LogLevel) visual.MessageDesign {
+//	switch level {
+//	case levels.Info:
+//		return
+//	case levels.Warning:
+//		return
+//	case levels.Debug:
+//		return
+//	case levels.Critical:
+//		return
+//	default:
+//		return visual.MessageDesign{
+//			ColorPalette: visual.ColorPalette{TextColor: visual.ColorWhite, BackgroundColor: visual.BgBlue},
+//			TextStyle:    "",
+//		}
+//	}
+//}
 
 func mapToFormatString(data map[string]string, format string) string {
 	var builder strings.Builder

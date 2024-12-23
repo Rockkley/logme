@@ -1,9 +1,5 @@
 package levels
 
-import (
-	"github.com/rockkley/logme/logme/entity"
-)
-
 type LogLevel int
 
 const (
@@ -21,13 +17,13 @@ const (
 //	out := fmt.Sprintf("%s%s%s%s %s: %s%s", visual2.BgGreen, lm.getTimestamp(), visual2.ColorReset, visual2.ColorGreen, "INFO", strings.ToLower(str), visual2.ColorReset)
 //}
 
-func (ll *LogLevel) Warning(message *entity.Message) {
-	if *ll < Warning {
-		return
-	}
-	//formattedMessage := lm.formatMessage(message)
-
-}
+//func (ll *LogLevel) Warning(message *entity.Message) {
+//	if *ll < Warning {
+//		return
+//	}
+//	//formattedMessage := lm.formatMessage(message)
+//
+//}
 
 //func (lm *LogMe) Critical(str string) {
 //	if lm.level < Critical {
