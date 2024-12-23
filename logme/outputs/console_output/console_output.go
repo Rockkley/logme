@@ -36,8 +36,15 @@ func NewConsoleOutput() *ConsoleOutput {
 }
 
 func (c *ConsoleOutput) Write(message *entity.Message) (err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("Recovered from panic in console output Write")
+		}
+	}()
 	consoleMessage := c.convertToConsoleMessage(*message)
-	_, err = fmt.Println(consoleMessage)
+	if _, err := fmt.Println(consoleMessage); err != nil {
+		panic(err)
+	}
 	return
 }
 

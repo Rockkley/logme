@@ -4,6 +4,7 @@ import (
 	"github.com/rockkley/logme/logme/entity/dto"
 	"github.com/rockkley/logme/logme/entity/levels"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -15,10 +16,11 @@ type MessageProducer struct {
 	level           levels.LogLevel
 	timestampLayout string
 	outputs         []LogOutput
+	outChan         chan *Message
 }
 
 func NewMessageProducer() *MessageProducer {
-	return &MessageProducer{timestampLayout: defaultTimestampLayout, level: levels.All}
+	return &MessageProducer{timestampLayout: defaultTimestampLayout, level: levels.All, outChan: make(chan *Message)}
 }
 
 func (mp *MessageProducer) Info(message string, ts time.Time) {
@@ -102,10 +104,16 @@ func (mp *MessageProducer) SetTimestampLayout(timestampLayout string) {
 }
 
 func (mp *MessageProducer) sendToOutputs(message *Message) {
+	var wg sync.WaitGroup
+	wg.Add(len(mp.outputs))
 	for _, o := range mp.outputs {
-		if err := o.Write(message); err != nil { // TODO запускать в горутинах
-			return // TODO не упускать ошибку, попробовать через панику
-		}
+		go func() {
+			defer wg.Done()
+			if err := o.Write(message); err != nil { // TODO запускать в горутинах
+				return // TODO не упускать ошибку, попробовать через панику
+			}
+		}()
+		wg.Wait()
 	}
 }
 

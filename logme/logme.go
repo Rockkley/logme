@@ -16,21 +16,7 @@ func NewLogMe() *LogMe {
 	}
 }
 
-//func (lm *LogMe) Info(message string) {
-//	ts := getTimestamp()
-//	level := levels.Info
-//	if !lm.messageProducer.Validate(message, level) {
-//		return
-//	}
-//
-//	dtoMsg := dto.MessageDTO{
-//		Level:     level,
-//		Text:      message,
-//		Timestamp: ts,
-//	}
-//	msg := lm.messageProducer.NewMessage(&dtoMsg)
-//	lm.sendToOutputs(msg)
-//}
+// Calls by level
 
 func (lm *LogMe) Info(message string) {
 	ts := getTimestamp()
@@ -52,13 +38,9 @@ func (lm *LogMe) Critical(message string) {
 	lm.messageProducer.Critical(message, ts)
 }
 
-// Calls by level
-
 func (lm *LogMe) SetTimestampLayout(timestampLayout string) {
 	lm.messageProducer.SetTimestampLayout(timestampLayout)
 }
-
-// Timestamp
 
 func getTimestamp() time.Time {
 	return time.Now()
