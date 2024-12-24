@@ -2,6 +2,7 @@ package logme
 
 import (
 	"github.com/rockkley/logme/logme/entity"
+	dto2 "github.com/rockkley/logme/logme/entity/dto"
 	"github.com/rockkley/logme/logme/entity/levels"
 	"time"
 )
@@ -20,22 +21,42 @@ func NewLogMe() *LogMe {
 
 func (lm *LogMe) Info(message string) {
 	ts := getTimestamp()
-	lm.messageProducer.Info(message, ts)
+	dto := dto2.MessageDTO{
+		Level:     levels.Info,
+		Text:      message,
+		Timestamp: ts,
+	}
+	lm.messageProducer.NewMessage(&dto)
 }
 
 func (lm *LogMe) Warning(message string) {
 	ts := getTimestamp()
-	lm.messageProducer.Warning(message, ts)
+	dto := dto2.MessageDTO{
+		Level:     levels.Warning,
+		Text:      message,
+		Timestamp: ts,
+	}
+	lm.messageProducer.NewMessage(&dto)
 }
 
 func (lm *LogMe) Debug(message string) {
 	ts := getTimestamp()
-	lm.messageProducer.Debug(message, ts)
+	dto := dto2.MessageDTO{
+		Level:     levels.Debug,
+		Text:      message,
+		Timestamp: ts,
+	}
+	lm.messageProducer.NewMessage(&dto)
 }
 
 func (lm *LogMe) Critical(message string) {
 	ts := getTimestamp()
-	lm.messageProducer.Critical(message, ts)
+	dto := dto2.MessageDTO{
+		Level:     levels.Critical,
+		Text:      message,
+		Timestamp: ts,
+	}
+	lm.messageProducer.NewMessage(&dto)
 }
 
 func (lm *LogMe) SetTimestampLayout(timestampLayout string) {

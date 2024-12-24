@@ -23,68 +23,16 @@ func NewMessageProducer() *MessageProducer {
 	return &MessageProducer{timestampLayout: defaultTimestampLayout, level: levels.All, outChan: make(chan *Message)}
 }
 
-func (mp *MessageProducer) Info(message string, ts time.Time) {
-	level := levels.Info
-	if !mp.Validate(message, level) {
+func (mp *MessageProducer) NewMessage(dto *dto.MessageDTO) {
+	if !mp.Validate(dto.Text, dto.Level) {
 		return
 	}
-	dtoMsg := dto.MessageDTO{
-		Level:     level,
-		Text:      message,
-		Timestamp: ts,
-	}
-	msg := mp.newMessage(&dtoMsg)
-	mp.sendToOutputs(msg)
-}
-
-func (mp *MessageProducer) Debug(message string, ts time.Time) {
-	level := levels.Debug
-	if !mp.Validate(message, level) {
-		return
-	}
-	dtoMsg := dto.MessageDTO{
-		Level:     level,
-		Text:      message,
-		Timestamp: ts,
-	}
-	msg := mp.newMessage(&dtoMsg)
-	mp.sendToOutputs(msg)
-}
-
-func (mp *MessageProducer) Warning(message string, ts time.Time) {
-	level := levels.Warning
-	if !mp.Validate(message, level) {
-		return
-	}
-	dtoMsg := dto.MessageDTO{
-		Level:     level,
-		Text:      message,
-		Timestamp: ts,
-	}
-	msg := mp.newMessage(&dtoMsg)
-	mp.sendToOutputs(msg)
-}
-
-func (mp *MessageProducer) Critical(message string, ts time.Time) {
-	level := levels.Critical
-	if !mp.Validate(message, level) {
-		return
-	}
-	dtoMsg := dto.MessageDTO{
-		Level:     level,
-		Text:      message,
-		Timestamp: ts,
-	}
-	msg := mp.newMessage(&dtoMsg)
-	mp.sendToOutputs(msg)
-}
-
-func (mp *MessageProducer) newMessage(dto *dto.MessageDTO) (msg *Message) {
-	msg = &Message{
+	msg := &Message{
 		Level:     dto.Level,
 		Text:      dto.Text,
 		Timestamp: dto.Timestamp,
 	}
+	mp.sendToOutputs(msg)
 	return
 }
 
@@ -120,3 +68,11 @@ func (mp *MessageProducer) sendToOutputs(message *Message) {
 func (mp *MessageProducer) AddOutput(output LogOutput) {
 	mp.outputs = append(mp.outputs, output)
 }
+
+//func (mp *MessageProducer) prepareMessage(dto *dto.MessageDTO) *Message {
+//	if !mp.Validate(dto.Text, dto.Level) {
+//		return nil
+//	}
+//	msg := mp.newMessage(dto)
+//	return msg
+//}

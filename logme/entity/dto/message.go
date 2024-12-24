@@ -10,9 +10,3 @@ type MessageDTO struct {
 	Text      string
 	Timestamp time.Time
 }
-
-//func (m *MessageDTO) Validate(){
-//	if m.Text == ""  {
-//		return
-//	}
-//}
