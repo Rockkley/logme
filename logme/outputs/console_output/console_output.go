@@ -76,13 +76,6 @@ func createLevelDesignsCache() levelDesignsCache {
 func (c *ConsoleOutput) convertToConsoleMessage(message entity.Message) string {
 	design := c.LevelDesigns[message.Level]
 
-	//consoleMessage = ConsoleMessage{
-	//	Design:    c.LevelDesigns[message.Level],
-	//	Timestamp: message.Timestamp,
-	//	Level:     levelToString[message.Level],
-	//	Text:      strings.ToLower(message.Text),
-	//}
-	//
 	formatData := map[string]string{
 		"BackgroundColor": design.ColorPalette.BackgroundColor,
 		"Timestamp":       message.Timestamp.Format(time.DateTime),
@@ -101,24 +94,6 @@ func (c *ConsoleOutput) convertToConsoleMessage(message entity.Message) string {
 	out := mapToFormatString(formatData, formatString)
 	return out
 }
-
-//func getDesignForLevel(level levels.LogLevel) visual.MessageDesign {
-//	switch level {
-//	case levels.Info:
-//		return
-//	case levels.Warning:
-//		return
-//	case levels.Debug:
-//		return
-//	case levels.Critical:
-//		return
-//	default:
-//		return visual.MessageDesign{
-//			ColorPalette: visual.ColorPalette{TextColor: visual.ColorWhite, BackgroundColor: visual.BgBlue},
-//			TextStyle:    "",
-//		}
-//	}
-//}
 
 func mapToFormatString(data map[string]string, format string) string {
 	var builder strings.Builder

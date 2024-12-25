@@ -1,9 +1,11 @@
 package logme
 
 import (
+	"fmt"
 	"github.com/rockkley/logme/logme/entity"
 	dto2 "github.com/rockkley/logme/logme/entity/dto"
 	"github.com/rockkley/logme/logme/entity/levels"
+	"runtime"
 	"time"
 )
 
@@ -41,9 +43,12 @@ func (lm *LogMe) Warning(message string) {
 
 func (lm *LogMe) Debug(message string) {
 	ts := getTimestamp()
+	metrics := GetRuntimeMetrics()
 	dto := dto2.MessageDTO{
-		Level:     levels.Debug,
-		Text:      message,
+		Level: levels.Debug,
+		Text: message + fmt.Sprintf(
+			" | cpu %d | calls %d | gorutines %d | alloc %d | total alloc %d",
+			metrics.NumCPU, metrics.CgoCalls, metrics.NumGoroutine, metrics.Alloc, metrics.TotalAlloc),
 		Timestamp: ts,
 	}
 	lm.messageProducer.NewMessage(&dto)
@@ -73,4 +78,19 @@ func (lm *LogMe) SetLevel(level levels.LogLevel) {
 
 func (lm *LogMe) AddOutput(output entity.LogOutput) {
 	lm.messageProducer.AddOutput(output)
+}
+
+func GetRuntimeMetrics() entity.DebugInfo {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	return entity.DebugInfo{
+		NumCPU:       runtime.NumCPU(),
+		CgoCalls:     int(runtime.NumCgoCall()),
+		NumGoroutine: runtime.NumGoroutine(),
+		Alloc:        int(m.Alloc / 1024 / 1024),
+		TotalAlloc:   int(m.TotalAlloc / 1024 / 1024),
+		Sys:          int(m.Sys / 1024 / 1024),
+		NumGC:        int(m.NumGC),
+	}
 }

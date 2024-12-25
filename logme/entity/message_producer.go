@@ -61,8 +61,8 @@ func (mp *MessageProducer) sendToOutputs(message *Message) {
 				return // TODO не упускать ошибку, попробовать через панику
 			}
 		}()
-		wg.Wait()
 	}
+	wg.Wait()
 }
 
 func (mp *MessageProducer) AddOutput(output LogOutput) {
