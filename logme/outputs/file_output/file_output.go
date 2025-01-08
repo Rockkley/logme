@@ -22,7 +22,7 @@ func (f *FileOutput) Write(message *entity.Message) error {
 	}
 	defer file.Close()
 
-	str := strings.Join([]string{message.Timestamp, message.Level.String(), message.Text, "\n"}, " ")
+	str := strings.Join([]string{message.Timestamp, message.Level.String(), message.Text.String(), "\n"}, " ")
 	_, err = file.WriteString(str)
 
 	return err

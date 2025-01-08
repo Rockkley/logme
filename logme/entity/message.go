@@ -1,9 +1,12 @@
 package entity
 
-import "github.com/rockkley/logme/logme/entity/levels"
+import (
+	"bytes"
+	"github.com/rockkley/logme/logme/entity/levels"
+)
 
 type Message struct {
 	Level     levels.LogLevel
-	Text      string
+	Text      bytes.Buffer
 	Timestamp string
 }

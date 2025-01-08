@@ -11,32 +11,27 @@ type LevelSetter struct {
 }
 
 func (ls *LevelSetter) Info() {
-	ls.mu.Lock()
-	defer ls.mu.Unlock()
-	ls.level = levels.Info
-
+	ls.setLevel(levels.Info)
 }
 
 func (ls *LevelSetter) Warning() {
-	ls.mu.Lock()
-	defer ls.mu.Unlock()
-	ls.level = levels.Warning
+	ls.setLevel(levels.Warning)
 }
 
 func (ls *LevelSetter) Debug() {
-	ls.mu.Lock()
-	defer ls.mu.Unlock()
-	ls.level = levels.Debug
+	ls.setLevel(levels.Debug)
 }
 
 func (ls *LevelSetter) Critical() {
-	ls.mu.Lock()
-	defer ls.mu.Unlock()
-	ls.level = levels.Critical
+	ls.setLevel(levels.Critical)
 }
 
 func (ls *LevelSetter) All() {
+	ls.setLevel(levels.All)
+}
+
+func (ls *LevelSetter) setLevel(level levels.LogLevel) {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
-	ls.level = levels.All
+	ls.level = level
 }

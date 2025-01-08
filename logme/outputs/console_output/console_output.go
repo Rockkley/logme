@@ -73,7 +73,7 @@ func (c *ConsoleOutput) convertToConsoleMessage(message *entity.Message) string 
 		"TextColor":       design.ColorPalette.TextColor,
 		"TextStyle":       design.TextStyle,
 		"Level":           message.Level.String(),
-		"Text":            strings.ToLower(message.Text),
+		"Text":            strings.ToLower(message.Text.String()),
 	}
 
 	formatString := c.FormatString
