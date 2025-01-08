@@ -3,94 +3,146 @@ package logme
 import (
 	"fmt"
 	"github.com/rockkley/logme/logme/entity"
-	dto2 "github.com/rockkley/logme/logme/entity/dto"
 	"github.com/rockkley/logme/logme/entity/levels"
-	"runtime"
+	"strings"
+	"sync"
 	"time"
 )
 
+const (
+	defaultTimestampLayout = time.DateTime
+)
+
 type LogMe struct {
-	messageProducer *entity.MessageProducer
+	outputFabric *OutputFabric
+	levelSetter  *LevelSetter
+	settings     *Settings
+	publishChan  chan entity.Message
+	active       bool
+}
+
+type Settings struct {
+	timestampFormat string
+	mu              sync.RWMutex
 }
 
 func NewLogMe() *LogMe {
+	settings := Settings{
+		timestampFormat: defaultTimestampLayout,
+	}
+	levelSetter := LevelSetter{
+		level: levels.All,
+	}
+
 	return &LogMe{
-		messageProducer: entity.NewMessageProducer(),
+		outputFabric: NewOutputFabric(),
+		settings:     &settings,
+		publishChan:  make(chan entity.Message),
+		levelSetter:  &levelSetter,
+		active:       false,
 	}
 }
 
 // Calls by level
 
 func (lm *LogMe) Info(message string) {
-	ts := getTimestamp()
-	dto := dto2.MessageDTO{
-		Level:     levels.Info,
-		Text:      message,
-		Timestamp: ts,
-	}
-	lm.messageProducer.NewMessage(&dto)
+	ts := getTimestamp() // get timestamp as early as possible
+	lm.pipeline(message, ts, levels.Info)
 }
 
 func (lm *LogMe) Warning(message string) {
-	ts := getTimestamp()
-	dto := dto2.MessageDTO{
-		Level:     levels.Warning,
-		Text:      message,
-		Timestamp: ts,
-	}
-	lm.messageProducer.NewMessage(&dto)
+	ts := getTimestamp() // get timestamp as early as possible
+	lm.pipeline(message, ts, levels.Warning)
 }
 
 func (lm *LogMe) Debug(message string) {
-	ts := getTimestamp()
-	metrics := GetRuntimeMetrics()
-	dto := dto2.MessageDTO{
-		Level: levels.Debug,
-		Text: message + fmt.Sprintf(
-			" | cpu %d | calls %d | gorutines %d | alloc %d | total alloc %d",
-			metrics.NumCPU, metrics.CgoCalls, metrics.NumGoroutine, metrics.Alloc, metrics.TotalAlloc),
-		Timestamp: ts,
-	}
-	lm.messageProducer.NewMessage(&dto)
+	//ts := getTimestamp() // get timestamp as early as possible
+	//runtimeMetrics := GetRuntimeMetrics()
+	//lm.newMessage(message, ts, levels.Info)
+	//params := dto.MessageDTO{
+	//	Level: levels.Debug,
+	//	Text: message + fmt.Sprintf( // ToDo manually add/remove parameters, no hardcoding
+	//		" | cpu %d | calls %d | gorutines %d | alloc %d | total alloc %d",
+	//		runtimeMetrics.NumCPU, runtimeMetrics.CgoCalls, runtimeMetrics.NumGoroutine,
+	//		runtimeMetrics.Alloc, runtimeMetrics.TotalAlloc),
+	//	Timestamp: timeStamp,
+	//}
+	//lm.messageProducer.NewMessage(&params)
 }
 
 func (lm *LogMe) Critical(message string) {
-	ts := getTimestamp()
-	dto := dto2.MessageDTO{
-		Level:     levels.Critical,
-		Text:      message,
-		Timestamp: ts,
+	ts := getTimestamp() // get timestamp as early as possible
+	lm.pipeline(message, ts, levels.Critical)
+}
+
+func (lm *LogMe) AddOutput() *OutputFabric {
+	return lm.outputFabric
+}
+
+func (lm *LogMe) sendToOutputs(message *entity.Message) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("recovered panic from writing to %s \n", err)
+		}
+	}()
+
+	var wg sync.WaitGroup
+
+	outs := lm.outputFabric.GetOutputs()
+
+	wg.Add(len(outs))
+
+	for _, o := range outs {
+		go func() {
+			defer wg.Done()
+			if err := o.Write(message); err != nil {
+				fmt.Println(err)
+				panic(err)
+			}
+		}()
 	}
-	lm.messageProducer.NewMessage(&dto)
+
+	wg.Wait()
+}
+
+func (lm *LogMe) SetLevel() *LevelSetter {
+	return lm.levelSetter
 }
 
 func (lm *LogMe) SetTimestampLayout(timestampLayout string) {
-	lm.messageProducer.SetTimestampLayout(timestampLayout)
+	lm.settings.timestampFormat = timestampLayout
 }
 
 func getTimestamp() time.Time {
 	return time.Now()
 }
 
-func (lm *LogMe) SetLevel(level levels.LogLevel) {
-	lm.messageProducer.SetLevel(level)
+func (lm *LogMe) pipeline(message string, timestamp time.Time, level levels.LogLevel) {
+
+	if !lm.validate(message, level) {
+		return
+	}
+
+	timestampFormatted := timestamp.Format(lm.settings.timestampFormat)
+
+	lm.sendToOutputs(&entity.Message{
+		Text:      message,
+		Level:     level,
+		Timestamp: timestampFormatted,
+	})
 }
 
-func (lm *LogMe) AddOutput(output entity.LogOutput) {
-	lm.messageProducer.AddOutput(output)
+func (lm *LogMe) validate(message string, level levels.LogLevel) bool {
+	if strings.TrimSpace(message) == "" || lm.levelSetter.level < level {
+		return false
+	}
+
+	return true
 }
 
-func GetRuntimeMetrics() entity.DebugInfo {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-
-	return entity.DebugInfo{
-		NumCPU:       runtime.NumCPU(),
-		CgoCalls:     int(runtime.NumCgoCall()),
-		NumGoroutine: runtime.NumGoroutine(),
-		Alloc:        int(m.Alloc / 1024 / 1024),
-		TotalAlloc:   int(m.TotalAlloc / 1024 / 1024),
-		Sys:          int(m.Sys / 1024 / 1024),
-		NumGC:        int(m.NumGC),
+func (lm *LogMe) observePublishChan() {
+	lm.active = true
+	for msg := range lm.publishChan {
+		lm.sendToOutputs(&msg)
 	}
 }

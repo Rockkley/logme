@@ -1,21 +1,31 @@
 package file_output
 
 import (
+	"github.com/rockkley/logme/logme/entity"
 	"os"
+	"strings"
 	"time"
 )
 
 type FileOutput struct {
-	defaultFolder string
-	FilePath      string
+	FilePath string
 }
 
-func (f *FileOutput) Write(message string) error {
-	return os.WriteFile(f.getCurrentDate()+" "+f.FilePath, []byte(f.getCurrentDateTime()+message+"\n"), 0644)
+func NewFileOutput(filePath string) *FileOutput {
+	return &FileOutput{FilePath: filePath}
 }
 
-func (f *FileOutput) getCurrentDateTime() string {
-	return time.Now().Format(time.DateTime)
+func (f *FileOutput) Write(message *entity.Message) error {
+	file, err := os.OpenFile(f.getCurrentDate()+" "+f.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	str := strings.Join([]string{message.Timestamp, message.Level.String(), message.Text, "\n"}, " ")
+	_, err = file.WriteString(str)
+
+	return err
 }
 
 func (f *FileOutput) getCurrentDate() string {
