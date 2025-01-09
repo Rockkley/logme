@@ -104,25 +104,15 @@ func (lm *LogMe) sendToOutputs(message *entity.Message) {
 	for _, o := range outs {
 		go func() {
 			defer lm.wg.Done()
+
 			if err := o.Write(message); err != nil {
 				panic(err)
 			}
+
 		}()
 	}
 
 	lm.wg.Wait()
-}
-
-func (lm *LogMe) SetLevel() *LevelSetter {
-	return lm.levelSetter
-}
-
-func (lm *LogMe) SetTimestampLayout(timestampLayout string) {
-	lm.settings.timestampFormat = timestampLayout
-}
-
-func getTimestamp() time.Time {
-	return time.Now()
 }
 
 func (lm *LogMe) pipeline(args []interface{}, timestamp time.Time, level levels.LogLevel) {
@@ -140,6 +130,7 @@ func (lm *LogMe) pipeline(args []interface{}, timestamp time.Time, level levels.
 	_, err := fmt.Fprint(&lm.buf, args...)
 
 	if err != nil {
+		fmt.Println("failed to add args to the buffer: ", err)
 		return
 	}
 
@@ -169,11 +160,23 @@ func (lm *LogMe) observePublishChan() {
 	}
 }
 
-func (lm *LogMe) AddHook(title string, value interface{}) {
+func (lm *LogMe) AddField(title string, value interface{}) {
 	lm.fields = append(lm.fields, Field{title: title, value: value})
 }
 
 type Field struct {
 	title string
 	value interface{}
+}
+
+func (lm *LogMe) SetLevel() *LevelSetter {
+	return lm.levelSetter
+}
+
+func (lm *LogMe) SetTimestampLayout(timestampLayout string) {
+	lm.settings.timestampFormat = timestampLayout
+}
+
+func getTimestamp() time.Time {
+	return time.Now()
 }
