@@ -26,6 +26,7 @@ func (of *OutputFabric) ConsoleOutput() {
 
 func (of *OutputFabric) FileOutput(filepath string) {
 	output := file_output.NewFileOutput(filepath)
+
 	of.mu.Lock()
 	defer of.mu.Unlock()
 	of.outputs = append(of.outputs, output)

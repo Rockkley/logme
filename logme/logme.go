@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rockkley/logme/logme/entity"
 	"github.com/rockkley/logme/logme/entity/levels"
+	"log"
 	"sync"
 	"time"
 )
@@ -21,6 +22,7 @@ type LogMe struct {
 	active       bool
 	wg           sync.WaitGroup
 	buf          bytes.Buffer
+	fields       []Field
 }
 
 type Settings struct {
@@ -47,18 +49,20 @@ func NewLogMe() *LogMe {
 
 // Calls by level
 
+// get timestamp as early as possible
+
 func (lm *LogMe) Info(args ...interface{}) {
-	ts := getTimestamp() // get timestamp as early as possible
+	ts := getTimestamp()
 	lm.pipeline(args, ts, levels.Info)
 }
 
 func (lm *LogMe) Warning(args ...interface{}) {
-	ts := getTimestamp() // get timestamp as early as possible
+	ts := getTimestamp()
 	lm.pipeline(args, ts, levels.Warning)
 }
 
 func (lm *LogMe) Debug(args ...interface{}) {
-	ts := getTimestamp() // get timestamp as early as possible
+	ts := getTimestamp()
 	runtimeMetrics := GetRuntimeMetrics()
 	text := fmt.Sprintf( // ToDo manually add/remove parameters, no hardcoding
 		" | cpu %d | calls %d | gorutines %d | alloc %d | total alloc %d",
@@ -69,7 +73,7 @@ func (lm *LogMe) Debug(args ...interface{}) {
 	//params := dto.MessageDTO{
 	//	Level: levels.Debug,
 	//	Text: message + fmt.Sprintf( // ToDo manually add/remove parameters, no hardcoding
-	//		" | cpu %d | calls %d | gorutines %d | alloc %d | total alloc %d",
+	//		" | cpu %d | calls %d | goroutines %d | alloc %d | total alloc %d",
 	//		runtimeMetrics.NumCPU, runtimeMetrics.CgoCalls, runtimeMetrics.NumGoroutine,
 	//		runtimeMetrics.Alloc, runtimeMetrics.TotalAlloc),
 	//	Timestamp: timeStamp,
@@ -78,7 +82,7 @@ func (lm *LogMe) Debug(args ...interface{}) {
 }
 
 func (lm *LogMe) Critical(args ...interface{}) {
-	ts := getTimestamp() // get timestamp as early as possible
+	ts := getTimestamp()
 	lm.pipeline(args, ts, levels.Critical)
 }
 
@@ -89,7 +93,7 @@ func (lm *LogMe) AddOutput() *OutputFabric {
 func (lm *LogMe) sendToOutputs(message *entity.Message) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Printf("recovered panic from writing to %s \n", err)
+			log.Printf("recovered panic from writing to %s \n", err)
 		}
 	}()
 
@@ -122,16 +126,24 @@ func getTimestamp() time.Time {
 }
 
 func (lm *LogMe) pipeline(args []interface{}, timestamp time.Time, level levels.LogLevel) {
-	defer lm.buf.Reset()
-
 	if !lm.validate(args, level) {
 		return
 	}
 
+	if len(lm.fields) != 0 {
+		for _, h := range lm.fields {
+			hookString := fmt.Sprintf(" || %s=%s", h.title, h.value)
+			args = append(args, hookString)
+		}
+	}
+
 	_, err := fmt.Fprint(&lm.buf, args...)
+
 	if err != nil {
 		return
 	}
+
+	defer lm.buf.Reset()
 
 	timestampFormatted := timestamp.Format(lm.settings.timestampFormat)
 
@@ -155,4 +167,13 @@ func (lm *LogMe) observePublishChan() {
 	for msg := range lm.publishChan {
 		lm.sendToOutputs(&msg)
 	}
+}
+
+func (lm *LogMe) AddHook(title string, value interface{}) {
+	lm.fields = append(lm.fields, Field{title: title, value: value})
+}
+
+type Field struct {
+	title string
+	value interface{}
 }
